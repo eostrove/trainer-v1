@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: trainer
+      POSTGRES_PASSWORD: trainer
+      POSTGRES_DB: trainer_v1
+    volumes:
+      - trainer_db:/var/lib/postgresql/data
+
+volumes:
+  trainer_db:
