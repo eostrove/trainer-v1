@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Lato } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
+const latoSans = Lato({
   variable: "--font-geist-sans",
+  weight: ["300", "400", "700", "900"],
   subsets: ["latin"],
 });
 
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${latoSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
       </body>
