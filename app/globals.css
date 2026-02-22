@@ -1,27 +1,30 @@
-@import "tailwindcss";
+@import "./tailwind.css";
 
 :root {
   --background: #fff8ef;
-  --foreground: #2e2a27;
-  --surface: #fffdf9;
+  --foreground: #3c332d;
+  --surface: #fbf5e9;
   --surface-border: #f2e5d8;
   --accent: #db8d55;
   --accent-soft: #fde8d6;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --white: #ffffff;
+  --pink-1: #ffd8ea;
+  --orange-1: #ffe8d1;
+  --orange-2: #e2bd8a;
+  --orange-3:#efeae3;
+  --gray-1: #F3F4F6;
+  --gray-2: #E5E7EB;
+  --purple-1: #DDD6FE;
+  --font-geist-sans: "Geist Sans", -apple-system, BlinkMachineSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-geist-mono: "Geist Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 body {
   min-height: 100vh;
   background:
-    radial-gradient(1200px 600px at 15% -10%, #ffe8d1 0%, transparent 60%),
-    radial-gradient(1400px 900px at 100% -8%, #ffd8ea 0%, transparent 70%),
-    linear-gradient(180deg, #e2bd8a 0%, var(--background) 100%);
+    radial-gradient(1200px 600px at 15% -10%, var(--orange-1) 0%, transparent 60%),
+    radial-gradient(1400px 900px at 100% -8%, var(--pink-1) 0%, transparent 70%),
+    linear-gradient(180deg, var(--orange-2) 0%, var(--background) 100%);
   color: var(--foreground);
   font-family: var(--font-geist-sans), "Avenir Next", "Segoe UI", sans-serif;
 }
