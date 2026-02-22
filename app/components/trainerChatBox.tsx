@@ -13,6 +13,7 @@ import {
 import { useMemo, useState } from "react";
 import { ChatMessage } from "../model/chatMessage";
 import { DailyCheckIn, WorkoutPlan } from "../lib/schemas";
+import TypingIndicator from "./typingIndictator";
 
 function uid() {
 	return Math.random().toString(16).slice(2);
@@ -189,6 +190,7 @@ export default function TrainerChatBox() {
 						</Paper>
 					))}
 				</Stack>
+				{isLoading && (<TypingIndicator />)}
 				{!plan && (
 					<Box className="mt-4">
 						<Box
