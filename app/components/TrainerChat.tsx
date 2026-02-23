@@ -1,19 +1,16 @@
 import {
 	Box,
 	Button,
-	Chip,
-	Divider,
-	List,
-	ListItem,
 	Paper,
 	Stack,
 	TextField,
-	Typography,
+	Typography
 } from "@mui/material";
 import { useMemo, useState } from "react";
-import { ChatMessage } from "../model/chatMessage";
 import { DailyCheckIn, WorkoutPlan } from "../lib/schemas";
-import TypingIndicator from "./typingIndictator";
+import { ChatMessage } from "../model/chatMessage";
+import TypingAnimation from "./TypingAnimation";
+import PlanDetails from "./PlanDetail";
 
 function uid() {
 	return Math.random().toString(16).slice(2);
@@ -39,7 +36,7 @@ function getGreetingByTime() {
 }
 
 function buildInitialPrompt() {
-	return `${getGreetingByTime()}! How are you feeling today? Give me a quick check-in in your own words. Share your energy, soreness, stress, sleep quality, and how your body feels so I can build a plan that fits you perfectly.`;
+	return `${getGreetingByTime()}! How are you feeling today? Rate your energy, soreness, stress, sleep quality, and how your body feels on a scale of 1-10 so I can build a plan that fits you perfectly.`;
 }
 
 function hasRequiredCheckInValues(checkIn: PartialCheckIn): checkIn is PartialCheckIn & Record<RequiredCheckInKey, number> {
@@ -56,7 +53,7 @@ function formatApiError(data: unknown, fallback: string): string {
 	return fallback;
 }
 
-export default function TrainerChatBox() {
+const TrainerChat = () => {
 	const initialPrompt = useMemo(() => buildInitialPrompt(), []);
 	const [messages, setMessages] = useState<ChatMessage[]>([
 		{ id: uid(), role: "trainer", content: initialPrompt },
@@ -170,27 +167,19 @@ export default function TrainerChatBox() {
 
 	return (
 		<>
-			<Box className="!bg-white rounded-lg p-4">
+			<Box className="!bg-white rounded-3xl p-6">
 				<Stack spacing={1} alignContent="center" className="!bg-white">
 					{messages.map((msg) => (
 						<Paper
 							key={msg.id}
 							elevation={0}
-							className={msg.role === "user" ? "!bg-gray-1" : "!bg-orange-3"}
-							sx={{
-								alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-								maxWidth: "85%",
-								px: 1.5,
-								py: 1.25,
-								borderRadius: 2,
-								whiteSpace: "pre-wrap",
-							}}
+							className={`rounded-3xl ${msg.role === "user" ? "!bg-gray-1 self-end" : "!bg-orange-3 self-start"} max-w-[85%] px-3 py-2.5 rounded-lg whitespace-pre-wrap`}
 						>
 							{msg.content}
 						</Paper>
 					))}
 				</Stack>
-				{isLoading && (<TypingIndicator />)}
+				{isLoading && (<TypingAnimation />)}
 				{!plan && (
 					<Box className="mt-4">
 						<Box
@@ -223,70 +212,10 @@ export default function TrainerChatBox() {
 				)}
 			</Box>
 
-				{/* {!plan && (
-					<Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.5 }}>
-						{missingRequired.map((key) => (
-							<Chip key={key} size="small" label={`Need ${key}`} variant="outlined" />
-						))}
-					</Stack>
-				)} */}
-
-			{plan && (
-				<Box sx={{ mt: 2, pt: 2 }}>
-					<Divider className="mb-2" />
-					<Typography variant="h6" className="mb-1">
-						Workout Plan
-					</Typography>
-
-					<Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" className="mb-1">
-						<Badge label={`Modality: ${plan.modality}`} />
-						<Badge label={`Duration: ${plan.durationMin} min`} />
-						<Badge label={`Intensity: ${plan.intensity}`} />
-					</Stack>
-
-					{plan.activities.map((act, idx) => (
-						<Paper key={idx} variant="outlined" sx={{ mb: 1.25, p: 1.25, borderRadius: 2 }}>
-							<Typography sx={{ fontWeight: 600 }}>{act.type}</Typography>
-							<Typography>{act.description}</Typography>
-							<Typography variant="caption" color="text.secondary">
-								{act.durationMin} min • {act.intensity}
-							</Typography>
-						</Paper>
-					))}
-
-					<Typography sx={{ mt: 1.25 }}>
-						<Box component="span" sx={{ fontWeight: 700 }}>
-							Rationale:
-						</Box>{" "}
-						{plan.rationale}
-					</Typography>
-
-					<Section title="Stop if" items={plan.stopIf} />
-
-					<Button onClick={reset} variant="outlined" sx={{ mt: 1.75 }}>
-						New check-in
-					</Button>
-				</Box>
-			)}
+			{plan && (<PlanDetails plan={plan} reset={reset} />)}
 		</>
 	);
 }
 
-function Badge({ label }: { label: string }) {
-	return <Chip label={label} variant="outlined" size="small" sx={{ bgcolor: "grey.50" }} />;
-}
+export default TrainerChat;
 
-function Section({ title, items }: { title: string; items: string[] }) {
-	return (
-		<Box sx={{ mt: 1.25 }}>
-			<Typography sx={{ fontWeight: 700, mb: 0.5 }}>{title}</Typography>
-			<List dense disablePadding sx={{ pl: 2 }}>
-				{items.map((it, idx) => (
-					<ListItem key={`${title}-${idx}`} sx={{ display: "list-item", py: 0 }}>
-						{it}
-					</ListItem>
-				))}
-			</List>
-		</Box>
-	);
-}

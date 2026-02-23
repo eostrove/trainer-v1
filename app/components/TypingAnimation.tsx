@@ -1,6 +1,6 @@
 "use client";
 
-export default function TypingIndicator() {
+export default function TypingAnimation() {
   return (
     <div
       aria-label="Trainer is typing"

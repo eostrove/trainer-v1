@@ -12,16 +12,20 @@ export const DailyCheckInSchema = z.object({
 
 export type DailyCheckIn = z.infer<typeof DailyCheckInSchema>;
 
-export const WorkoutPlanSchema = z.object({
-  date: z.string().optional(),
-  modality: z.enum(["dance", "strength", "zone2", "recovery", "rest"]),
-  durationMin: z.number().int().min(0).max(180),
-  activities: z.array(z.object({
+export const ActivitySchema = z.object({
 	type: z.string(),
 	description: z.string(),
 	durationMin: z.number().int().min(0).max(180),
 	intensity: z.enum(["easy", "moderate", "hard"]),
-  })).min(1),
+});
+
+export type Activity = z.infer<typeof ActivitySchema>;
+
+export const WorkoutPlanSchema = z.object({
+  date: z.string().optional(),
+  modality: z.enum(["dance", "strength", "zone2", "recovery", "rest"]),
+  durationMin: z.number().int().min(0).max(180),
+  activities: z.array(ActivitySchema).min(1),
   intensity: z.enum(["easy", "moderate", "hard"]),
   rationale: z.string(),
   stopIf: z.array(z.string()),

@@ -8,7 +8,7 @@ const client = new OpenAI({
 
 const PartialCheckInSchema = z.object({
   sleepHours: z.number().min(0).max(24).optional(),
-  sleepQuality: z.number().int().min(1).max(5).optional(),
+  sleepQuality: z.number().int().min(1).max(10).optional(),
   energy: z.number().int().min(1).max(10).optional(),
   soreness: z.number().int().min(0).max(10).optional(),
   stress: z.number().int().min(1).max(10).optional(),
@@ -63,6 +63,67 @@ function computeMissing(checkIn: z.infer<typeof PartialCheckInSchema>): Required
   return REQUIRED_KEYS.filter((key) => typeof checkIn[key] !== "number");
 }
 
+function buildFollowUpPrompt(missing: RequiredCheckInKey[]) {
+  const labels: Record<RequiredCheckInKey, string> = {
+    sleepHours: "hours of sleep (0-24)",
+    sleepQuality: "sleep quality (1-10)",
+    energy: "energy (1-10)",
+    soreness: "soreness (0-10)",
+    stress: "stress (1-10)",
+  };
+
+  if (missing.length === 0) {
+    return "Perfect, I have what I need to build your plan.";
+  }
+
+  if (missing.length === 1) {
+    return `Thanks, that helps. One more quick one: ${labels[missing[0]]}?`;
+  }
+
+  const requested = missing.slice(0, 2).map((key) => labels[key]).join(" and ");
+  return `Got it. To dial this in, can you quickly share your ${requested}?`;
+}
+
+function normalizeExtracted(extractedRaw: z.infer<typeof IntakeModelOutputSchema>["extracted"]) {
+  const normalized: z.infer<typeof PartialCheckInSchema> = {};
+  if (!extractedRaw) return normalized;
+
+  const putIfValid = <K extends keyof z.infer<typeof PartialCheckInSchema>>(
+    key: K,
+    value: unknown,
+    schema: z.ZodType<z.infer<typeof PartialCheckInSchema>[K]>
+  ) => {
+    const parsed = schema.safeParse(value);
+    if (parsed.success) {
+      normalized[key] = parsed.data;
+    }
+  };
+
+  if (extractedRaw.sleepHours !== null && extractedRaw.sleepHours !== undefined) {
+    putIfValid("sleepHours", extractedRaw.sleepHours, z.number().min(0).max(24).optional());
+  }
+  if (extractedRaw.sleepQuality !== null && extractedRaw.sleepQuality !== undefined) {
+    putIfValid("sleepQuality", extractedRaw.sleepQuality, z.number().int().min(1).max(10).optional());
+  }
+  if (extractedRaw.energy !== null && extractedRaw.energy !== undefined) {
+    putIfValid("energy", extractedRaw.energy, z.number().int().min(1).max(10).optional());
+  }
+  if (extractedRaw.soreness !== null && extractedRaw.soreness !== undefined) {
+    putIfValid("soreness", extractedRaw.soreness, z.number().int().min(0).max(10).optional());
+  }
+  if (extractedRaw.stress !== null && extractedRaw.stress !== undefined) {
+    putIfValid("stress", extractedRaw.stress, z.number().int().min(1).max(10).optional());
+  }
+  if (extractedRaw.sorenessAreas !== null && extractedRaw.sorenessAreas !== undefined) {
+    putIfValid("sorenessAreas", extractedRaw.sorenessAreas, z.array(z.string()).optional());
+  }
+  if (extractedRaw.notes !== null && extractedRaw.notes !== undefined) {
+    putIfValid("notes", extractedRaw.notes, z.string().optional());
+  }
+
+  return normalized;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -105,6 +166,8 @@ Rules:
 - If user implies illness, acknowledge and ask safety-focused follow-up.
 - Keep coachReply concise (1-3 sentences).
 - coachReply should feel conversational like you're chatting with a good friend, not like a survey.
+- If user gives vague language (e.g., "just okay", "kinda tired"), ask a friendly clarifying question for exact numeric values.
+- Ask for at most 1-2 missing required fields per turn.
 - Return valid JSON only.
 `,
         },
@@ -145,35 +208,27 @@ Rules:
     try {
       modelJson = JSON.parse(rawContent);
     } catch {
-      return NextResponse.json({ error: "Model returned non-JSON content", raw: rawContent }, { status: 500 });
+      const missing = computeMissing(currentCheckIn);
+      return NextResponse.json({
+        coachReply: buildFollowUpPrompt(missing),
+        checkIn: currentCheckIn,
+        missing,
+        done: missing.length === 0,
+      });
     }
 
     const parsedModel = IntakeModelOutputSchema.safeParse(modelJson);
     if (!parsedModel.success) {
-      return NextResponse.json(
-        { error: "Model output invalid", details: parsedModel.error.flatten(), raw: modelJson },
-        { status: 500 }
-      );
+      const missing = computeMissing(currentCheckIn);
+      return NextResponse.json({
+        coachReply: buildFollowUpPrompt(missing),
+        checkIn: currentCheckIn,
+        missing,
+        done: missing.length === 0,
+      });
     }
 
-    const extractedRaw = parsedModel.data.extracted ?? {};
-    const normalizedExtracted = {
-      ...("sleepHours" in extractedRaw && extractedRaw.sleepHours !== null
-        ? { sleepHours: extractedRaw.sleepHours }
-        : {}),
-      ...("sleepQuality" in extractedRaw && extractedRaw.sleepQuality !== null
-        ? { sleepQuality: extractedRaw.sleepQuality }
-        : {}),
-      ...("energy" in extractedRaw && extractedRaw.energy !== null ? { energy: extractedRaw.energy } : {}),
-      ...("soreness" in extractedRaw && extractedRaw.soreness !== null
-        ? { soreness: extractedRaw.soreness }
-        : {}),
-      ...("stress" in extractedRaw && extractedRaw.stress !== null ? { stress: extractedRaw.stress } : {}),
-      ...("sorenessAreas" in extractedRaw && extractedRaw.sorenessAreas !== null
-        ? { sorenessAreas: extractedRaw.sorenessAreas }
-        : {}),
-      ...("notes" in extractedRaw && extractedRaw.notes !== null ? { notes: extractedRaw.notes } : {}),
-    };
+    const normalizedExtracted = normalizeExtracted(parsedModel.data.extracted);
 
     const mergedCandidate = {
       ...currentCheckIn,
@@ -182,21 +237,20 @@ Rules:
 
     const parsedMerged = PartialCheckInSchema.safeParse(mergedCandidate);
     if (!parsedMerged.success) {
-      return NextResponse.json(
-        {
-          error: "Extracted values invalid",
-          details: parsedMerged.error.flatten(),
-          extracted: normalizedExtracted,
-        },
-        { status: 400 }
-      );
+      const missing = computeMissing(currentCheckIn);
+      return NextResponse.json({
+        coachReply: buildFollowUpPrompt(missing),
+        checkIn: currentCheckIn,
+        missing,
+        done: missing.length === 0,
+      });
     }
 
     const mergedCheckIn = parsedMerged.data;
     const missing = computeMissing(mergedCheckIn);
 
     return NextResponse.json({
-      coachReply: parsedModel.data.coachReply,
+      coachReply: parsedModel.data.coachReply || buildFollowUpPrompt(missing),
       checkIn: mergedCheckIn,
       missing,
       done: missing.length === 0,
