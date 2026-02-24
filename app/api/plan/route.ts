@@ -19,8 +19,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("parsed check-in", parsed.data);
-
     const checkIn = parsed.data;
     const context = {
       longTermGoals: body.longTermGoals ?? body.goals ?? body.goal ?? null,
@@ -136,9 +134,7 @@ Rules:
         },
       ],
     });
-    console.log("response okay")
     const content = response.choices[0].message.content;
-    console.log("content", content)
 
     if (!content) {
       return NextResponse.json(
@@ -149,7 +145,6 @@ Rules:
 
     // 4. Parse model output
     const parsedPlan = WorkoutPlanSchema.safeParse(JSON.parse(content));
-    console.log("parsedPlan", parsedPlan);
     if (!parsedPlan.success) {
       return NextResponse.json(
         { error: "Model output invalid", details: parsedPlan.error.flatten() },

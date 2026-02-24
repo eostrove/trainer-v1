@@ -1,4 +1,7 @@
 import {
+	Accordion,
+	AccordionDetails,
+	AccordionSummary,
 	Box,
 	Button,
 	Paper,
@@ -6,11 +9,12 @@ import {
 	TextField,
 	Typography
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DailyCheckIn, WorkoutPlan } from "../lib/schemas";
 import { ChatMessage } from "../model/chatMessage";
 import TypingAnimation from "./TypingAnimation";
 import PlanDetails from "./PlanDetail";
+import { CaretDownIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
 function uid() {
 	return Math.random().toString(16).slice(2);
@@ -63,6 +67,11 @@ const TrainerChat = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [plan, setPlan] = useState<WorkoutPlan | null>(null);
+	const [chatExpanded, setChatExpanded] = useState(true);
+
+	useEffect(() => {
+		if (plan) setChatExpanded(false);
+	}, [plan]);
 
 	async function requestPlan(finalCheckIn: PartialCheckIn) {
 		if (!hasRequiredCheckInValues(finalCheckIn)) {
@@ -158,6 +167,7 @@ const TrainerChat = () => {
 
 	function reset() {
 		setPlan(null);
+		setChatExpanded(true);
 		setCheckIn({});
 		setInput("");
 		setError(null);
@@ -167,50 +177,69 @@ const TrainerChat = () => {
 
 	return (
 		<>
-			<Box className="!bg-white rounded-3xl p-6">
-				<Stack spacing={1} alignContent="center" className="!bg-white">
-					{messages.map((msg) => (
-						<Paper
-							key={msg.id}
-							elevation={0}
-							className={`rounded-3xl ${msg.role === "user" ? "!bg-gray-1 self-end" : "!bg-orange-3 self-start"} max-w-[85%] px-3 py-2.5 rounded-lg whitespace-pre-wrap`}
-						>
-							{msg.content}
-						</Paper>
-					))}
-				</Stack>
-				{isLoading && (<TypingAnimation />)}
-				{!plan && (
-					<Box className="mt-4">
-						<Box
-							component="form"
-							onSubmit={(e) => {
-								e.preventDefault();
-								submit();
-							}}
-							sx={{ display: "flex", gap: 1 }}
-						>
-							<TextField
-								value={input}
-								onChange={(e) => setInput(e.target.value)}
-								placeholder="Share how you're feeling today in your own words..."
-								disabled={isLoading}
-								size="small"
-								fullWidth
-							/>
-							<Button type="submit" disabled={isLoading} variant="outlined">
-								Send
-							</Button>
-						</Box>
-
-						{error && (
-							<Typography color="error" sx={{ mt: 1, whiteSpace: "pre-wrap" }}>
-								{error}
+			<Accordion
+				expanded={chatExpanded}
+				onChange={(_, expanded) => setChatExpanded(expanded)}
+				disableGutters
+				elevation={0}
+				className="!mb-3 !rounded-3xl !border !border-[var(--surface-border)] !bg-white !shadow-lg"
+				sx={{ "&::before": { display: "none" } }}
+			>
+				{plan && (
+					<AccordionSummary expandIcon={<CaretDownIcon />}>
+						<Stack direction="row" spacing={1} alignItems="center">
+							<Typography className="!text-sm !font-semibold !text-[var(--foreground)]">
+								Today&apos;s check in 
 							</Typography>
-						)}
-					</Box>
+							<CheckCircleIcon weight="bold" className="!text-green-500 !ml-1" size={20} />
+						</Stack>
+					</AccordionSummary>
 				)}
-			</Box>
+				<AccordionDetails className="!bg-white border-none rounded-3xl p-2">
+					<Stack spacing={1} alignContent="center" className="!bg-white">
+						{messages.map((msg) => (
+							<Paper
+								key={msg.id}
+								elevation={0}
+								className={`rounded-3xl !border-none ${msg.role === "user" ? "!bg-gray-1 self-end" : "!bg-orange-3 self-start"} max-w-[85%] px-3 py-2.5 rounded-lg whitespace-pre-wrap`}
+							>
+								{msg.content}
+							</Paper>
+						))}
+					</Stack>
+					{isLoading && (<TypingAnimation />)}
+					{!plan && (
+						<Box className="mt-4">
+							<Box
+								component="form"
+								onSubmit={(e) => {
+									e.preventDefault();
+									submit();
+								}}
+								sx={{ display: "flex", gap: 1 }}
+							>
+								<TextField
+									value={input}
+									onChange={(e) => setInput(e.target.value)}
+									placeholder="Share how you're feeling today in your own words..."
+									disabled={isLoading}
+									size="small"
+									fullWidth
+								/>
+								<Button type="submit" disabled={isLoading} variant="outlined">
+									Send
+								</Button>
+							</Box>
+
+							{error && (
+								<Typography color="error" sx={{ mt: 1, whiteSpace: "pre-wrap" }}>
+									{error}
+								</Typography>
+							)}
+						</Box>
+					)}
+				</AccordionDetails>
+			</Accordion>
 
 			{plan && (<PlanDetails plan={plan} reset={reset} />)}
 		</>
@@ -218,4 +247,3 @@ const TrainerChat = () => {
 }
 
 export default TrainerChat;
-

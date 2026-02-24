@@ -11,7 +11,7 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
 	return (
 		<Paper
 			variant="outlined"
-			className="rounded-3xl border-surface-border bg-surface p-3.5 shadow-sm"
+			className="!rounded-3xl border-surface-border bg-surface p-3.5 shadow-sm"
 		>
 			<div className="mb-1.5 flex items-start justify-between gap-3">
 				<Typography className="!text-sm !font-bold !capitalize !text-[var(--foreground)]">{activity.type}</Typography>
