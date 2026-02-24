@@ -84,6 +84,16 @@ function buildFollowUpPrompt(missing: RequiredCheckInKey[]) {
   return `Got it. To dial this in, can you quickly share your ${requested}?`;
 }
 
+function finalizeCoachReply(coachReply: string, missing: RequiredCheckInKey[]) {
+  const trimmed = coachReply.trim();
+  if (missing.length > 0) return trimmed || buildFollowUpPrompt(missing);
+
+  // Intake is complete: avoid extra probing questions and keep it as a concise confirmation.
+  if (!trimmed) return "Awesome, thanks. I have everything I need.";
+  if (trimmed.includes("?")) return "Awesome, thanks. I have everything I need.";
+  return trimmed;
+}
+
 function normalizeExtracted(extractedRaw: z.infer<typeof IntakeModelOutputSchema>["extracted"]) {
   const normalized: z.infer<typeof PartialCheckInSchema> = {};
   if (!extractedRaw) return normalized;
@@ -139,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     const response = await client.chat.completions.create({
       model: "gpt-4.1-mini",
-      temperature: 0.4,
+      temperature: 0.8,
       messages: [
         {
           role: "system",
@@ -167,7 +177,8 @@ Rules:
 - Keep coachReply concise (1-3 sentences).
 - coachReply should feel conversational like you're chatting with a good friend, not like a survey.
 - If user gives vague language (e.g., "just okay", "kinda tired"), ask a friendly clarifying question for exact numeric values.
-- Ask for at most 1-2 missing required fields per turn.
+- Ask for at most 1-2 missing required fields per turn, but only if there is a missing required field. If all required fields are present, do not ask for anything else.
+- If all required fields are present, coachReply must be a brief confirmation that acknowledges how the athlete is feeling and must not contain a question.
 - Return valid JSON only.
 `,
         },
@@ -248,9 +259,8 @@ Rules:
 
     const mergedCheckIn = parsedMerged.data;
     const missing = computeMissing(mergedCheckIn);
-
     return NextResponse.json({
-      coachReply: parsedModel.data.coachReply || buildFollowUpPrompt(missing),
+      coachReply: finalizeCoachReply(parsedModel.data.coachReply, missing),
       checkIn: mergedCheckIn,
       missing,
       done: missing.length === 0,

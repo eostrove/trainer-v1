@@ -1,12 +1,14 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { WorkoutPlan } from "../lib/schemas";
 import ActivityCard from "./ActivityCard";
+import { BarbellIcon, FlameIcon, TimerIcon } from "@phosphor-icons/react";
 
-function Badge({ label }: { label: string }) {
+function Badge({ label, icon }: { label: string, icon: React.ReactNode }) {
 	return (
-		<span className="inline-flex items-center rounded-full border border-[var(--surface-border)] bg-[var(--white)] px-3 py-1 text-xs font-semibold text-[var(--foreground)] shadow-[0_4px_14px_rgba(80,52,32,0.06)]">
-			{label}
-		</span>
+		<Stack direction="row" spacing={1} className="inline-flex items-center rounded-full border border-surface-border px-4 py-1">
+			<Typography>{label}</Typography>
+			{icon}
+		</Stack>
 	);
 }
 
@@ -31,14 +33,14 @@ const PlanDetails = ({ plan, reset }: { plan: WorkoutPlan; reset: () => void }) 
 			<div className={headerStyles}>
 				<Typography className="!text-xl !font-bold">Workout Plan</Typography>
 				<Typography variant="body2">
-					Built for how you feel right now.
+					{plan.summary}
 				</Typography>
 			</div>
 
 			<Stack direction="row" alignItems="center" spacing={2} className="mb-3">
-				<Badge label={`Modality: ${plan.modality}`} />
-				<Badge label={`Duration: ${plan.durationMin} min`} />
-				<Badge label={`Intensity: ${plan.intensity}`} />
+				<Badge label={`Modality: ${plan.modality}`} icon={<BarbellIcon />} />
+				<Badge label={`Duration: ${plan.durationMin} min`} icon={<TimerIcon />} />
+				<Badge label={`Intensity: ${plan.intensity}`} icon={<FlameIcon />} />
 			</Stack>
 
 			<div className="space-y-2.5">

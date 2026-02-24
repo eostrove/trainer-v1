@@ -23,6 +23,7 @@ export type Activity = z.infer<typeof ActivitySchema>;
 
 export const WorkoutPlanSchema = z.object({
   date: z.string().optional(),
+  summary: z.string(),
   modality: z.enum(["dance", "strength", "zone2", "recovery", "rest"]),
   durationMin: z.number().int().min(0).max(180),
   activities: z.array(ActivitySchema).min(1),

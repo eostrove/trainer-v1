@@ -1,4 +1,4 @@
-import { Paper, Typography } from "@mui/material";
+import { Paper, Stack, Typography } from "@mui/material";
 import { Activity, WorkoutPlan } from "../lib/schemas";
 
 function intensityPillClass(intensity: WorkoutPlan["intensity"]) {
@@ -13,18 +13,24 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
 			variant="outlined"
 			className="!rounded-3xl border-surface-border bg-surface p-3.5 shadow-sm"
 		>
-			<div className="mb-1.5 flex items-start justify-between gap-3">
-				<Typography className="!text-sm !font-bold !capitalize !text-[var(--foreground)]">{activity.type}</Typography>
+			<Stack direction="row" alignItems="center" justifyContent="space-between" className="mb-1.5">
+				<Stack direction="row" alignItems="center" spacing={1}>
+					<Typography className="!text-sm !font-bold !capitalize !text-[var(--foreground)]">{activity.type}</Typography>
+					<Typography className="!text-xs !font-medium">
+						{activity.durationMin} min
+					</Typography>
+				</Stack>
+			
+				
 				<span
 					className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${intensityPillClass(activity.intensity)}`}
 				>
 					{activity.intensity}
 				</span>
-			</div>
+
+			</Stack>
 			<Typography className="!text-sm !leading-6 !text-[rgba(60,51,45,0.9)]">{activity.description}</Typography>
-			<Typography className="!mt-1.5 !text-xs !font-medium !text-[rgba(60,51,45,0.7)]">
-				{activity.durationMin} min
-			</Typography>
+			
 		</Paper>)
 
 	}; 

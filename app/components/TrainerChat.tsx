@@ -9,7 +9,7 @@ import {
 	TextField,
 	Typography
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DailyCheckIn, WorkoutPlan } from "../lib/schemas";
 import { ChatMessage } from "../model/chatMessage";
 import TypingAnimation from "./TypingAnimation";
@@ -68,10 +68,6 @@ const TrainerChat = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [plan, setPlan] = useState<WorkoutPlan | null>(null);
 	const [chatExpanded, setChatExpanded] = useState(true);
-
-	useEffect(() => {
-		if (plan) setChatExpanded(false);
-	}, [plan]);
 
 	async function requestPlan(finalCheckIn: PartialCheckIn) {
 		if (!hasRequiredCheckInValues(finalCheckIn)) {
@@ -152,10 +148,6 @@ const TrainerChat = () => {
 			}
 
 			if (intake.done) {
-				setMessages((m) => [
-					...m,
-					{ id: uid(), role: "trainer", content: "Perfect. I have what I need. Building your workout plan now..." },
-				]);
 				await requestPlan(updatedCheckIn);
 			}
 		} catch (e: unknown) {

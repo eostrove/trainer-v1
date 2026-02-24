@@ -34,6 +34,8 @@ export async function POST(req: NextRequest) {
     if (checkIn.soreness >= 8 || checkIn.energy <= 2) {
       const recoveryPlan = {
         date: new Date().toISOString(),
+        summary:
+          "You’re really fatigued today, so let's do a short, recovery-focused session to reduce strain and help you bounce back for stronger training tomorrow.",
         modality: "recovery",
         durationMin: 20,
         intensity: "easy",
@@ -115,9 +117,11 @@ Constraints:
 - activities must be internally consistent with modality and intensity
 - Sum of activities.durationMin should approximately match durationMin
 - rationale should explicitly mention readiness factors (sleep/energy/soreness/stress/notes) and progression logic
+- the summary should be a response to how the athlete is feeling while also explaining the workout plan at a high level in 1-2 sentences.
 
 Return ONLY a JSON object with exactly these keys:
 {
+  "summary": string,
   "modality": "dance" | "strength" | "zone2" | "recovery" | "rest",
   "durationMin": number,
   "intensity": "easy" | "moderate" | "hard",
