@@ -1,10 +1,6 @@
+import { getOpenAIClient } from "@/app/lib/openai";
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import z from "zod";
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
 
 const PartialCheckInSchema = z.object({
   sleepHours: z.number().min(0).max(24).optional(),
@@ -135,6 +131,7 @@ function normalizeExtracted(extractedRaw: z.infer<typeof IntakeModelOutputSchema
 }
 
 export async function POST(req: NextRequest) {
+  const client = getOpenAIClient();
   try {
     const body = await req.json();
     const parsedReq = IntakeRequestSchema.safeParse(body);

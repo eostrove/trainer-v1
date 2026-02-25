@@ -1,12 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getOpenAIClient } from "@/app/lib/openai";
 import { DailyCheckInSchema, WorkoutPlanSchema } from "@/app/lib/schemas";
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  const client = getOpenAIClient();
   try {
     const body = await req.json();
 
